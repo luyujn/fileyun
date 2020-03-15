@@ -1,0 +1,82 @@
+//定义扩展属性(给脚本用的脚本)
+buildscript {
+
+    //定义扩展属性(可选)
+    ext {
+        springBootVersion = "2.1.3.RELEASE"
+    }
+    
+    repositories {
+        mavenLocal()
+        maven { url 'https://maven.aliyun.com/nexus/content/groups/public/' }
+        maven { url 'https://mvnrepository.com/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+
+// 所有模块都采用统一的版本号以及groupName
+allprojects {
+
+    //修改项目属性(可选)
+    group 'person.fileyun'
+    version '1.0-SNAPSHOT'
+
+    //应用插件
+    apply plugin: 'java'
+//    apply plugin: 'jar'
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    // JVM 版本号要求
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    // java编译的时候缺省状态下会因为中文字符而失败
+    [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
+
+    // 全局设置依赖配置
+    configurations {
+        providedRuntime
+    }
+
+    // 定义仓库
+    repositories {
+        mavenLocal()
+        maven { url 'https://maven.aliyun.com/nexus/content/groups/public/' }
+        maven { url 'https://mvnrepository.com/' }
+        mavenCentral()
+    }
+
+    // 定义依赖:声明项目中需要哪些依赖
+    dependencies {
+        compile fileTree(dir: 'lib', exclude: '', include: '*.jar')
+
+    }
+}
+    
+
+// 配置所有子模块
+subprojects {
+
+    //指定目录结构
+    sourceSets {
+        main {
+            java {
+                srcDir 'src/main/java'
+            }
+            resources {
+                srcDir 'src/main/java'
+                srcDir 'src/main/resources'
+            }
+        }
+    }
+    // 关掉bootRepackage任务
+    //bootRepackage.enabled = jar
+}
+

@@ -1,0 +1,21 @@
+server:
+  port: 8080
+  tomcat:
+    basedir: F:\Tmp
+
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      file-size-threshold: 2KB
+      max-file-size: 200MB
+      max-request-size: 215MB
+
+
+file:
+  upload:
+    dir: H:\remote\upload
+
+logging:
+  path: E:\logs\file-api
+
