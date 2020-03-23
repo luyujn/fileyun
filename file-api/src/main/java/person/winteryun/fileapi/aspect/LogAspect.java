@@ -3,10 +3,15 @@ package person.winteryun.fileapi.aspect;
 
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.connector.RequestFacade;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +24,10 @@ public class LogAspect {
 
     private static final String REQUEST_PARAMS = "reqParam";
 
+    private static final String REQUEST_IP = "reqIP";
+
+    private static final String REQUEST_METHOD = "method";
+
     ThreadLocal<Map<String, Object>> threadLocal = new ThreadLocal<>();
 
     @Pointcut("execution(public * person.winteryun.fileapi.controller.*.*(..))")
@@ -30,17 +39,34 @@ public class LogAspect {
         long startTime = System.currentTimeMillis();
         Map<String, Object> threadInfo = new HashMap<>();
         threadInfo.put(START_TIME, startTime);
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        //请求的IP
+        String ip = request.getRemoteAddr();
+        //请求的参数
+        String methodName = (joinPoint.getTarget().getClass().getName() + "." + joinPoint.getSignature().getName() + "()");
         // 请求参数。
-        StringBuilder requestStr = new StringBuilder();
-        Object[] args = joinPoint.getArgs();
-        if (args != null && args.length > 0) {
-            for (Object arg : args) {
-                requestStr.append(arg.toString());
-            }
+//        StringBuilder requestStr = new StringBuilder();
+//        Object[] args = joinPoint.getArgs();
+//        if (args != null && args.length > 0) {
+//            for (Object arg : args) {
+//                if (arg.getClass() != RequestFacade.class) {
+//                    requestStr.append(arg.toString()).append(";");
+//                }
+//            }
+//        }
+        Enumeration<String> enumeration = request.getParameterNames();
+        Map<String, String> parameterMap = new HashMap<>();
+        while (enumeration.hasMoreElements()) {
+            String parameter = enumeration.nextElement();
+            parameterMap.put(parameter, request.getParameter(parameter));
         }
-        threadInfo.put(REQUEST_PARAMS, requestStr.toString());
+        String str = JSON.toJSONString(parameterMap);
+
+        threadInfo.put(REQUEST_PARAMS, str);
+        threadInfo.put(REQUEST_IP, ip);
+        threadInfo.put(REQUEST_METHOD, methodName);
         threadLocal.set(threadInfo);
-        log.info("接口开始调用:requestData={}", threadInfo.get(REQUEST_PARAMS));
+//        log.info("接口开始调用:requestData={}", threadInfo.get(REQUEST_PARAMS));
     }
 
 
@@ -55,8 +81,11 @@ public class LogAspect {
         long takeTime = System.currentTimeMillis() - (long) threadInfo.getOrDefault(START_TIME, System.currentTimeMillis());
         String req = JSON.toJSONString(threadInfo.get(REQUEST_PARAMS));
         String res = JSON.toJSONString(obj);
+        String method = (String) threadInfo.get(REQUEST_METHOD);
+        String ip = (String) threadInfo.get(REQUEST_IP);
+
         threadLocal.remove();
-        log.info("接口调用:耗时={}ms,req={},result={}",
-                takeTime,req, res);
+        log.info("{}接口调用:耗时={}ms,请求ip={},req={},result={}",
+                method, takeTime, ip, req, res);
     }
 }
