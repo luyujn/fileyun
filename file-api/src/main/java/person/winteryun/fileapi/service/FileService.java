@@ -78,7 +78,12 @@ public class FileService {
             }
 
             List<String> fileList = new ArrayList<>();
-            for (int i = offset; i <= array.length || i < limit; i++) {
+            int count=0;
+            for (int i = offset; i <= array.length; i++) {
+                if(count >limit){
+                    break;
+                }
+                count++;
                 fileList.add(array[i].getName());
             }
 
